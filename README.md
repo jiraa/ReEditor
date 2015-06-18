@@ -1,1 +1,2 @@
 # ReEditor
+一个不用getSelection的蛋疼编辑器
