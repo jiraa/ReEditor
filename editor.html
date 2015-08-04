@@ -1,226 +1,207 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="user-scalable=no">
+    <meta name="viewport" content="height=210, width=device-width, user-scalable=no, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style type="text/css">
+        *{margin: 0; padding: 0;}
+    html,body{
+        height: 212px;
+        overflow:hidden;
+        font-size: 16px;
+    }
+    </style>
 </head>
 <body>
-<div id="editor" contentEditable="true" style="width:400px; height: 200px; border: #ccc 1px solid; margin: 50px auto;"></div>
-<ul style="font-size: 16px; line-height: 24px;">
-<li id="bold">粗</li>
-<li id="color">红</li>
-<li id="bg">蓝</li>
-<li id="italic">斜</li>
-<li id="underline">线</li>
-<li id="size">大</li>
-<li id="height">高</li>
-<li id="align">对齐</li>
-</ul>
-<div id="outbtn">输出</div>
-<div id="returncolor" ></div>
-<div id="output" style="width: 600px; height: 200px; border: #ccc 1px solid; margin: 30px auto;">
-	
+<div id="editor" contentEditable="true" style="height: 200px; padding:5px; margin:0 8px; overflow-y:auto; overflow-x:hidden;" autofocus="autofocus">
+    RichTextContent
 </div>
+    <script type="text/javascript">
+        window.onload = function() {
+            RE.callback("ready");
+        };
 
-<script type="text/javascript" >
-	var setBold = document.getElementById('bold');
-    var setColor = document.getElementById('color');
-    var setBg = document.getElementById('bg');
-    var setItalic = document.getElementById('italic');
-    var setUnderline = document.getElementById('underline');
-    var setSize = document.getElementById('size');
-    var setHeight = document.getElementById('height');
-    var setAlign = document.getElementById('align');
-    //
-    var outbtn = document.getElementById('outbtn');
-//
-    var RE = {}; 
-    RE.editor = document.getElementById('editor');
+        var RE = {};
+        RE.currentSelection;
 
-    RE.checkTag = function(tag){
-        //var h = RE.editor.innerHTML;
-        // var re;
-        // if(tag =='b'){
-        //  //re = /<b>/i
-        //  re = /<\/?b[^>]*>/gi
-        // }else if(tag == 'i'){
-        //  re = /<\/?i[^>]*>/gi
-        // }else if(tag == 'u'){
-        //  re = /<\/?u[^>]*>/gi
-        // }
-        // return re.test(h)
-        if(RE.editor.getElementsByTagName(tag).length){
-            return true
-        }else{
-            return false
-        }
-    }
-    RE.deleteTag = function(tag){
-        var tmpH, re, newH;
-        if(RE.checkTag('div')){
-            tmpH = RE.editor.getElementsByTagName('div')[0].innerHTML;
-        }else{
-            tmpH = RE.editor.innerHTML
-        }
+        RE.editor = document.getElementById('editor');
 
-        if(tag =='b'){
-            re = /<\/?b[^>]*>/gi;
-            newH = tmpH.replace(re, "")
-        }else if(tag == 'i'){
-            re = /<\/?i[^>]*>/gi;
-            newH = tmpH.replace(re, "")
-        }else if(tag == 'u'){
-            re = /<\/?u[^>]*>/gi;
-            newH = tmpH.replace(re, "")
-        }
-        RE.setHtml(newH)
-    }
-
-    RE.getColor = function(){
-        if(RE.checkTag('font')){
-            if(RE.editor.getElementsByTagName('font')[0].color ==''){
-                return "默认"
-            }else{
-                return RE.editor.getElementsByTagName('font')[0].color
+        RE.editor.onkeyup = function(e){
+            if(e.keyCode == 8){
+                if(editor.querySelectorAll('div').length < 1){
+                    editor.innerHTML = '<div data-role="line">默认文本</div>'
+                }
             }
-        }else{
-            return "默认"
         }
-    }
-    RE.getBg = function(){
-        if(RE.checkTag('font')){
-            if(RE.editor.getElementsByTagName('font')[0].style.backgroundColor == ''){
-                return "默认"
-            }else{
-                return RE.editor.getElementsByTagName('font')[0].style.backgroundColor
-            }
-        }else{
-            return "默认"
-        }
-    }
-    RE.setHtml = function(contents) {
-        if(RE.checkTag('div')){
-            RE.editor.getElementsByTagName('div')[0].innerHTML = decodeURIComponent(contents.replace(/\+/g, '%20'));
-        }else{
-            RE.editor.innerHTML  = decodeURIComponent(contents.replace(/\+/g, '%20'));
-        }
-    }
+        document.addEventListener("selectionchange", function() { RE.backuprange(); });
 
-    RE.getHtml = function() {
-        if(RE.checkTag('div')){
-            return RE.editor.getElementsByTagName('div')[0].innerHTML
-        }else{
+        RE.editor.addEventListener("input", function() {
+                                   RE.updatePlaceholder();
+                                   RE.backuprange();
+                                   RE.callback("input");
+                                   });
+
+        RE.editor.addEventListener("focus", function() {
+                                   RE.backuprange();
+                                   RE.callback("focus");
+                                   });
+
+        RE.editor.addEventListener("blur", function() {
+                                   RE.callback("blur");
+                                   });
+
+        RE.callback = function(method) {
+            window.location.href = "re-callback://" + method;
+        }
+
+        RE.setHtml = function(contents) {
+            RE.editor.innerHTML = contents;
+            RE.updatePlaceholder();
+        }
+
+        RE.getHtml = function() {
             return RE.editor.innerHTML;
         }
-        
-    }
 
-    RE.getText = function() {
-        return RE.editor.innerText;
-    }
-    RE.isEmpty = function(){
-        if (RE.getText().length <1){
-            return true
-        }else{
-            return false
+        RE.getText = function() {
+            return RE.editor.innerText;
         }
-    }
-    setBold.onclick = function(){
-        console.log(2);
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('b')){
-            RE.deleteTag('b')
-        }else{
-            RE.setHtml('<b>' + RE.getHtml() + '</b>' )
-        }
-    }
-    //testing
-    var textcolor = '#ff0000';
-    setColor.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('font')){
-            RE.editor.getElementsByTagName('font')[0].color = textcolor
-        }else{
-            RE.setHtml('<font' + ' color="' + textcolor + '">' + RE.getHtml() + '</font>' )
-        }
-    }
-    //testing
-    var bgcolor = 'rgba(0,255,0,1)'
-    setBg.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('font')){
-            RE.editor.getElementsByTagName('font')[0].style.backgroundColor = bgcolor
-        }else{
-            RE.setHtml('<font' + ' style="background-color:' + bgcolor + '">' + RE.getHtml() + '</font>' )
-        }
-    }
-    setItalic.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('i')){
-            RE.deleteTag('i')
-        }else{
-            RE.setHtml('<i>' + RE.getHtml() + '</i>' )
-        }
-    }
-    setUnderline.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('u')){
-            RE.deleteTag('u')
-        }else{
-            RE.setHtml('<u>' + RE.getHtml() + '</u>' )
-        }
-    }
-    //testing
-    var textsize = 16
-    //
-    setSize.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('font')){
-            RE.editor.getElementsByTagName('font')[0].size = textsize
-        }else{
-            RE.setHtml('<font' + ' size="' + textsize + '">' + RE.getHtml() + '</font>' )
-        }
-    }
-    //testing
-    var lineHeight = 3;
-    //
-    setHeight.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('div')){
-            RE.editor.getElementsByTagName('div')[0].style.lineHeight = lineHeight;
-        }else{
-            RE.setHtml('<div' + ' style="line-height:' + lineHeight + '">' + RE.getHtml() + '</div>' )
-        }
-    }
-    //testing
-    var textalign ="right";
-    //
-    setAlign.onclick = function(){
-        if(RE.isEmpty()){
-            return
-        }else if(RE.checkTag('div')){
-            RE.editor.getElementsByTagName('div')[0].style.textAlign = textalign;
-        }else{
-            RE.setHtml('<div' + ' style="text-align:' + textalign + '">' + RE.getHtml() + '</div>' )
-        }
-    }
 
-    //
-    outbtn.onclick = function(){
+        RE.setPlaceholderText = function(text) {
+            RE.editor.setAttribute("placeholder", text);
+        }
 
-        var outwrap = document.getElementById('output');
-        var returncolor = document.getElementById('returncolor');
-        outwrap.innerText = RE.editor.innerHTML;
-        returncolor.innerText = "文字颜色是:" + RE.getColor()  + "___________背景颜色是:"  + RE.getBg();
-    }
-</script>
+        RE.updatePlaceholder = function() {
+            if (RE.editor.textContent.length > 0) {
+                RE.editor.classList.remove("placeholder");
+            } else {
+                RE.editor.classList.add("placeholder");
+            }
+        }
 
+        RE.removeFormat = function() {
+            document.execCommand('removeFormat', false, null);
+        }
+
+        RE.setSize = function(size) {
+            document.execCommand('FontSize', false, size);
+        }
+        RE.setHeight = function (size){
+            RE.line = editor.querySelectorAll('div');
+            for(var i = 0; i < RE.line.length; i ++){
+                RE.line[i].style.lineHeight = size
+            }
+        }
+
+        RE.undo = function() {
+            document.execCommand('undo', false, null);
+        }
+
+        RE.redo = function() {
+            document.execCommand('redo', false, null);
+        }
+
+        RE.setBold = function() {
+            document.execCommand('bold', false, null);
+        }
+
+        RE.setItalic = function() {
+            document.execCommand('italic', false, null);
+        }
+
+        RE.setUnderline = function() {
+            document.execCommand('underline', false, null);
+        }
+
+        RE.setColor = function(color) {
+            RE.restorerange();
+            document.execCommand("styleWithCSS", null, true);
+            document.execCommand('foreColor', false, color);
+            document.execCommand("styleWithCSS", null, false);
+        }
+
+        RE.setBg = function(color) {
+            RE.restorerange();
+            document.execCommand("styleWithCSS", null, true);
+            document.execCommand('hiliteColor', false, color);
+            document.execCommand("styleWithCSS", null, false);
+        }
+        RE.setAlign = function(align){
+            if(align == 'center'){
+                document.execCommand('justifyCenter', false, null);
+            }else if(align == 'right'){
+                document.execCommand('justifyRight', false, null);
+            }else{
+                document.execCommand('justifyLeft', false, null);
+            }
+        }
+
+        RE.insertHTML = function(html) {
+            RE.restorerange();
+            document.execCommand('insertHTML', false, html);
+        }
+
+        RE.insertLink = function(url, title) {
+            RE.restorerange();
+            var sel = document.getSelection();
+            if (sel.toString().length != 0) {
+                if (sel.rangeCount) {
+                    
+                    var el = document.createElement("a");
+                    el.setAttribute("href", url);
+                    el.setAttribute("title", title);
+                    
+                    var range = sel.getRangeAt(0).cloneRange();
+                    range.surroundContents(el);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
+            RE.callback("input");
+        }
+
+        RE.prepareInsert = function() {
+            RE.backuprange();
+        }
+
+        RE.backuprange = function(){
+            var selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                var range = selection.getRangeAt(0);
+                RE.currentSelection = {
+                    "startContainer": range.startContainer,
+                    "startOffset": range.startOffset,
+                    "endContainer": range.endContainer,
+                    "endOffset": range.endOffset};
+            }
+        }
+
+        RE.restorerange = function(){
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            var range = document.createRange();
+            range.setStart(RE.currentSelection.startContainer, RE.currentSelection.startOffset);
+            range.setEnd(RE.currentSelection.endContainer, RE.currentSelection.endOffset);
+            selection.addRange(range);
+        }
+
+        RE.focus = function() {
+            var range = document.createRange();
+            range.selectNodeContents(RE.editor);
+            range.collapse(false);
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            RE.editor.focus();
+        }
+
+        RE.blurFocus = function() {
+            RE.editor.blur();
+        }
+        RE.getInnerHtml = function(){
+            var html = RE.editor.innerHTML;
+            return html
+        }
+    </script>
 </body>
 </html>
