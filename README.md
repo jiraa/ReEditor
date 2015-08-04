@@ -1,2 +1,2 @@
 # ReEditor
-一个不用getSelection的蛋疼编辑器
+与IOS原生交互的一个富文本编辑器
